@@ -14,6 +14,9 @@ class Settings:
     model_revision: str = ""
     served_name: str = ""
     model_dir: str = ""
+    drafter_repo: str = ""
+    drafter_revision: str = ""
+    drafter_dir: str = ""
     tensorfold_src: str = ""
     tensorfold_sha: str = ""
     zig: str = "zig"
@@ -42,6 +45,11 @@ class Settings:
     def model(self) -> Path:
         """The served checkpoint: a release as published (NVFP4 by default, or bf16)."""
         return self.path(self.model_dir)
+
+    @property
+    def drafter(self) -> Path | None:
+        """The publisher's DFlash2 drafter, or None to serve without one."""
+        return self.path(self.drafter_dir) if self.drafter_dir else None
 
     @property
     def cache(self) -> Path:
@@ -86,6 +94,8 @@ class Settings:
                 a += [flag, value]
         if not self.drafts:
             a.append("--no-drafts")
+        if self.drafter:
+            a += ["--drafter", str(self.drafter)]
         if self.api_key:
             a += ["--api-key", self.api_key]
         a += self.extra_args.split()
@@ -126,6 +136,8 @@ def validate(s: Settings) -> list[str]:
         out.append("no engine: set tensorfold_sha (local.toml) or binary")
     if not (s.model / "config.json").exists():
         out.append(f"no checkpoint at {s.model}: hf download {s.model_repo} --revision {s.model_revision} --local-dir {s.model_dir}")
+    if s.drafter and not (s.drafter / "config.json").exists():
+        out.append(f"no drafter at {s.drafter}: hf download {s.drafter_repo} --revision {s.drafter_revision} --local-dir {s.drafter_dir} (or drafter_dir = \"\")")
     if s.parallel < 1 or s.parallel > 16:
         out.append("parallel must be 1 to 16")
     if s.context < 1 or s.context > 262144:

@@ -11,11 +11,19 @@ model_revision = "99eea4477a001a41b86914e41feb4b2ed86105e5"
 served_name = "ripple"
 model_dir = "~/models/Ripple-65B-Preview-NVFP4"
 
+[drafter]
+# The publisher's DFlash2 drafter (bf16 as published, 7.5 GiB): drafted replies equal plain ones bit for bit, 1.5-2.7x
+# a stream's speed. hf download ricursiveAI/Ripple-65B-Preview-DFlash2 --revision <drafter_revision> --local-dir <drafter_dir>
+# Set drafter_dir = "" in local.toml to serve without it (8 instead of 7 full-window streams fit).
+drafter_repo = "ricursiveAI/Ripple-65B-Preview-DFlash2"
+drafter_revision = "35609b3be3dd08a822b3ba1257c1ea5dd6f87632"
+drafter_dir = "~/models/Ripple-65B-Preview-DFlash2"
+
 [engine]
 # TensorFold's native Metal engine with the ricursive family: a worktree of tensorfold_src at tensorfold_sha, built by
 # `python3 -m mac build` under tf_cache; `binary` names a built tensorfold-native instead
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha
-tensorfold_sha = "1f5209927a78a1c9731387e52d919e5fa92b8915"  # the PR #2231 head
+tensorfold_sha = "45685de42fb24f715c8e5197ced9e57924ad432f"  # the PR #2260 head (the drafter, on PR #2231)
 zig = "zig"                              # Zig 0.17.0
 zig_cpu = "native"
 binary = ""

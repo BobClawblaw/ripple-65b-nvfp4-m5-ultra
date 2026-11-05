@@ -11,8 +11,9 @@ from .config import Settings
 
 
 def weights_gib(s: Settings) -> float:
-    """The checkpoint's resident share once loaded: its safetensors shards."""
-    return sum(f.stat().st_size for f in s.model.glob("*.safetensors")) / 2**30
+    """The checkpoint's resident share once loaded: its safetensors shards, and the drafter's."""
+    dirs = [s.model] + ([s.drafter] if s.drafter else [])
+    return sum(f.stat().st_size for d in dirs for f in d.glob("*.safetensors")) / 2**30
 
 
 def health(s: Settings, timeout: float = 3) -> dict | None:

@@ -14,7 +14,7 @@ XGRAMMAR_REPO = "https://github.com/mlc-ai/xgrammar"
 
 # where tensorfold_sha lives
 TENSORFOLD_REPO = "https://github.com/BobClawblaw/TensorFold"
-TENSORFOLD_BRANCH = "ripple-metal"
+TENSORFOLD_BRANCH = "ripple-dflash2"
 
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:

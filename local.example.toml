@@ -2,6 +2,9 @@
 [model]
 model_dir = "~/models/Ripple-65B-Preview-NVFP4"
 
+[drafter]
+drafter_dir = "~/models/Ripple-65B-Preview-DFlash2"   # "" serves without the drafter
+
 [engine]
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha
 zig = "~/tools/zig-0.17.0/zig"

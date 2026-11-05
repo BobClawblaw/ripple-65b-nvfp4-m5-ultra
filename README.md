@@ -1,16 +1,19 @@
-# Ripple-65B-Preview on one M5 Ultra (TensorFold native, the NVFP4 release)
+# Ripple-65B-Preview on one M5 Ultra (TensorFold native, the NVFP4 release + DFlash2 drafter)
 
 Serves [Ripple-65B-Preview](https://huggingface.co/ricursiveAI/Ripple-65B-Preview), ricursiveAI's dense 65B model
 with contexts up to 1M tokens, from the publisher's own
 [NVFP4 release](https://huggingface.co/ricursiveAI/Ripple-65B-Preview-NVFP4) as published, with TensorFold's native
 Metal engine, as an OpenAI-compatible server with reasoning, tool calls, structured output, the prompt cache and
 several streams. Nothing is converted. The NVFP4 release keeps attention, embeddings and head in bf16 and stores the
-MLPs in NVFP4: 53 GiB against the bf16 release's 121 GiB, which leaves 135 GiB of a 256 GB Mac for caches.
+MLPs in NVFP4: 53 GiB against the bf16 release's 121 GiB. The publisher's
+[DFlash2 drafter](https://huggingface.co/ricursiveAI/Ripple-65B-Preview-DFlash2) (7.5 GiB, bf16 as published) drafts
+for it: replies stay bit-identical to undrafted ones, and a stream runs 1.5 to 2.7 times faster.
 
-The engine's `ricursive` family is on the `ripple-metal` branch of
-[BobClawblaw/TensorFold](https://github.com/BobClawblaw/TensorFold), proposed to TensorFold as
-[PR #2231](https://github.com/ashhart/TensorFold/pull/2231) and not yet on its main. This recipe builds that PR's head,
-commit `1f520992`.
+The engine's `ricursive` family is proposed to TensorFold as
+[PR #2231](https://github.com/ashhart/TensorFold/pull/2231), and the drafter as
+[PR #2260](https://github.com/ashhart/TensorFold/pull/2260) on top of it; neither is on TensorFold's main yet. This
+recipe builds #2260's head, commit `45685de4` (the `ripple-dflash2` branch of
+[BobClawblaw/TensorFold](https://github.com/BobClawblaw/TensorFold)).
 
 ## Quick start
 
@@ -21,6 +24,8 @@ Needs an M5 Mac (the family refuses M1-M4: its prompts run on the M5's tensor un
 git clone https://github.com/ashhart/TensorFold ~/github/TensorFold
 hf download ricursiveAI/Ripple-65B-Preview-NVFP4 --revision 99eea4477a001a41b86914e41feb4b2ed86105e5 \
   --local-dir ~/models/Ripple-65B-Preview-NVFP4
+hf download ricursiveAI/Ripple-65B-Preview-DFlash2 --revision 35609b3be3dd08a822b3ba1257c1ea5dd6f87632 \
+  --local-dir ~/models/Ripple-65B-Preview-DFlash2
 cp local.example.toml local.toml      # then set zig (and paths, if yours differ)
 python3 -m mac build                  # the pinned engine and libtfgrammar, under ~/.cache/ripple-65b
 python3 -m mac up                     # http://127.0.0.1:8897/v1, model "ripple"
@@ -39,17 +44,18 @@ name in upper case overrides both (`PORT=8888 HOST=0.0.0.0 python3 -m mac up`).
 | setting | default | |
 |---|---|---|
 | `model_repo`, `model_revision`, `model_dir` | the NVFP4 release | the bf16 release serves the same way (`ricursiveAI/Ripple-65B-Preview` at `240d5966cbe00f0627c699e59ef58560b60303cf`) |
-| `context` | 262144 | a stream's window; the engine takes up to 1,048,576 (the card's 1M), checked to 258,039 |
+| `drafter_repo`, `drafter_revision`, `drafter_dir` | the DFlash2 drafter | `drafter_dir = ""` serves without it |
+| `context` | 262144 | a stream's window and the engine's cap (the longest checked: 258,039 tokens) |
 | `parallel` | 2 | streams decoded together, each reply equal to its run alone |
 | `max_tokens` | 32768 | a reply's default ceiling; thinking counts |
 | `temperature`, `top_p`, `top_k` | unset | the release names no sampling settings: the server's defaults (greedy) |
 | `prompt_cache_gib` | 16 | kept prompt states between turns; they give way to streams |
 | `drafts` | true | the lane engine's copy drafts (replies are identical with them off) |
 
-**Memory.** The NVFP4 weights take 54.8 GiB, wired between requests. 64 of the 80 layers slide over 1,024 keys and
-keep a 3,072-slot ring; every fifth layer keeps every key, in bf16: 16.75 GiB a stream at 262,144 tokens (64.8 GiB
-at 1,048,576). The engine
-holds weights and caches to 75% of RAM, so a 256 GB Mac has 135 GiB for streams and kept prompts.
+**Memory.** The NVFP4 weights take 54.8 GiB and the drafter 7.7 GiB (its weights and its bf16 key rings), wired
+between requests. 64 of the 80 layers slide over 1,024 keys and keep a 3,072-slot ring; every fifth layer keeps every
+key, in bf16: 16.75 GiB a stream at 262,144 tokens. The engine holds weights and caches to 75% of RAM, so a 256 GB Mac
+has 127.5 GiB for streams and kept prompts with the drafter (seven full-window streams), 135.2 GiB without it.
 
 **Thinking.** Ripple decides for itself whether to think: it writes `<think>` when it does, and the server puts that
 part in `reasoning_content`; a reply without it is all `content`. The chat template has no thinking switch.
@@ -57,16 +63,19 @@ Ripple's think markers are spelled from several tokens, so a `thinking_budget` a
 
 ## What works, and how it was checked
 
-On one M5 Ultra (256 GB, macOS 27), the engine at commit `1f520992` (the speed and prompt runs on the same family
-code before its last rebase onto TensorFold main), checkpoint revision 99eea447. The full account, with the bf16
+On one M5 Ultra (256 GB, macOS 27), checkpoint revision 99eea447, drafter revision 35609b3b. The drafted runs are
+on the drafter's code (#2260, the same code as `45685de4` before its last rebase); the plain checks below are on
+#2231's family code, which #2260 leaves bit-identical (53 of 53 replies, same speed). The full account, with the bf16
 release's numbers, is the engine's
-[recipe page](https://github.com/BobClawblaw/TensorFold/blob/ripple-metal/docs/recipes/ripple-65b-metal.md).
+[recipe page](https://github.com/BobClawblaw/TensorFold/blob/ripple-dflash2/docs/recipes/ripple-65b-metal.md).
 
 - **Exactness.** Against a float64 run of the same checkpoint (`tools/zig/ricursive_reference.py`), over 2,586
   teacher-forced positions: mean KL 0.0007 for prompt chunks and 0.0011 for decode windows. Prompt chunks of 2,048,
   1,000 and 333 rows give bit-identical logits, and decode windows equal one-row steps bit for bit.
-- **Kernels.** Every kernel the family runs passes TensorFold's kernel contract: 36 of 36, with 15 planted controls
-  all caught.
+- **Kernels.** Every kernel the family and the drafter run passes TensorFold's kernel contract: 75 of 75, with 25
+  planted controls all caught.
+- **Drafts.** With the drafter, drafted == plain 12/12 and 12/12 under structured output, seeded sampling 9/9, a
+  60-turn soak and 12 concurrent replies each equal to the request alone, structured output 18/18, tools 5/5.
 - **Serving** (the recipe harness's quick plan): structured output 18/18, drafted == plain 12/12; tool calls 5/5;
   seeded sampling 9/9; a resumed turn equal to the cold one after a restart; a 60-turn soak and 12 concurrent replies
   each equal to the request alone; streaming 4/4, multi-turn recall 8/8, stop strings 3/3, max_tokens 3/3.
@@ -90,30 +99,37 @@ position where this checkpoint is nearly torn between two answers; the bf16 rele
 
 ## Measured
 
-The recipe harness (4 Nov 2026), `--context 262144 --parallel 2`, greedy 256-token replies, nothing else loaded:
+The recipe harness (5 Nov 2026), `--context 262144 --parallel 2`, greedy 256-token replies (prose, code, structured,
+list), nothing else loaded:
 
-| streams | tokens/s (all streams) | first token | a round |
-|---:|---:|---:|---:|
-| 1 | 10.1-10.2 | 0.61-0.74 s | 99 ms |
-| 2 | 18.6-19.1 | 0.93-1.10 s | 107 ms |
+| streams | with the drafter | without | first token (drafted) | a round (drafted / without) |
+|---:|---:|---:|---:|---:|
+| 1 | 15.7 / 27.5 / 17.9 / 19.7 | 10.2 / 10.2 / 10.3 / 10.2 | 0.52-0.65 s | 131 / 98 ms |
+| 2 | 23.2 / 37.3 / 27.0 / 41.1 | 19.0 / 18.9 / 19.2 / 18.9 | 0.80-0.97 s | 167 / 106 ms |
+
+Tokens a second, all streams together. A drafted round keeps 2.66 tokens on average with one stream (48% of drafted
+tokens accepted).
 
 | cold prompt | 2,220 | 8,776 | 35,015 | 139,723 tokens |
 |---|---:|---:|---:|---:|
 | tokens a second | 569 | 605 | 587 | 434 |
 | time to first token | 3.9 s | 14.5 s | 59.6 s | 322 s |
 
-A multi-turn chat's resumed turn starts in 0.67 s against 8.2 s cold. One stream reads the 53 GiB of weights each
-step; a second stream costs 8% more a round. The harness's quality suite was not run on this build.
+Cold prompts (4 Nov 2026, without the drafter; prompt speed with the drafter was not measured). A multi-turn
+chat's resumed turn starts in 0.58 s against 7.7 s cold with the drafter. The harness's quality suite was not run on
+this build.
 
 On the [TensorFold leaderboard](https://tensorfold.dev/benchmarks) (community-v1, submitted 5 Nov 2026, pending
-moderation): code at 11.0 tok/s sampled and 12.2 greedy, first text in 0.35 s. The chat cell shows as incomplete:
-the suite asks for 256-token replies without ignoring end-of-sequence, and Ripple ends most of its chat answers
-sooner, so those samples count as early stops (about 10.3 tok/s while they ran).
+moderation): code at 11.0 tok/s sampled and 12.2 greedy, first text in 0.35 s. The chat cell shows as incomplete: the
+suite asks for 256-token replies without ignoring end-of-sequence, and Ripple ends most of its chat answers sooner, so
+those samples count as early stops (about 10.3 tok/s while they ran). The drafted run (community-v1, submitted 5 Nov
+2026, pending moderation, the drafter named in the receipt): code at 20.1 tok/s sampled and 35.4 greedy, first text in
+0.28 s; chat incomplete for the same reason (15.3 and 24.5 tok/s while it ran); 2,954 of 4,650 drafted tokens accepted.
 
 ## Notes
 
-- **Not served:** images (Ripple has no vision tower) and the publisher's DFlash2 drafter. Drafts come only from
-  the lane engine's copies.
+- **Not served:** images (Ripple has no vision tower).
+- The drafter was run beside the NVFP4 release only; beside the bf16 release it is unchecked.
 - Only the M5 Ultra was checked; a smaller Mac needs fewer or shorter streams.
 
 ## License
