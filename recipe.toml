@@ -1,0 +1,39 @@
+# The recipe's defaults. `local.toml` next to this file overrides them for one Mac (copy local.example.toml); an
+# environment variable of the same name in upper case overrides both (PORT=8888 python3 -m mac up).
+
+[model]
+# ricursiveAI's NVFP4 release as published (MLPs NVFP4, attention bf16, 53 GiB; nothing is converted):
+# hf download ricursiveAI/Ripple-65B-Preview-NVFP4 --revision <model_revision> --local-dir <model_dir>
+# The bf16 release (ricursiveAI/Ripple-65B-Preview at 240d5966cbe00f0627c699e59ef58560b60303cf, 121 GiB) serves the
+# same way: set all three in local.toml.
+model_repo = "ricursiveAI/Ripple-65B-Preview-NVFP4"
+model_revision = "99eea4477a001a41b86914e41feb4b2ed86105e5"
+served_name = "ripple"
+model_dir = "~/models/Ripple-65B-Preview-NVFP4"
+
+[engine]
+# TensorFold's native Metal engine with the ricursive family: a worktree of tensorfold_src at tensorfold_sha, built by
+# `python3 -m mac build` under tf_cache; `binary` names a built tensorfold-native instead
+tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha
+tensorfold_sha = "1f5209927a78a1c9731387e52d919e5fa92b8915"  # the PR #2231 head
+zig = "zig"                              # Zig 0.17.0
+zig_cpu = "native"
+binary = ""
+
+[local]
+host = "127.0.0.1"
+port = 8897
+tf_cache = "~/.cache/ripple-65b"
+
+[serve]
+context = 262144                 # a stream's window
+parallel = 2                     # streams decoded together, each reply equal to its run alone
+max_tokens = 32768               # a reply's default ceiling (the model's thinking counts)
+temperature = ""                 # the release names no sampling settings: the server's defaults (greedy)
+top_p = ""
+top_k = ""
+prompt_cache_gib = 16            # kept prompt states between turns; they give way to streams
+drafts = true                    # the lane engine's copy drafts (replies are identical with them off)
+keep_warm = 86400
+api_key = ""
+extra_args = ""

@@ -1,0 +1,11 @@
+# Copy to local.toml (git-ignored) and change what differs on this Mac.
+[model]
+model_dir = "~/models/Ripple-65B-Preview-NVFP4"
+
+[engine]
+tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha
+zig = "~/tools/zig-0.17.0/zig"
+
+[local]
+host = "127.0.0.1"
+port = 8897
