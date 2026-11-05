@@ -105,6 +105,11 @@ The recipe harness (4 Nov 2026), `--context 262144 --parallel 2`, greedy 256-tok
 A multi-turn chat's resumed turn starts in 0.67 s against 8.2 s cold. One stream reads the 53 GiB of weights each
 step; a second stream costs 8% more a round. The harness's quality suite was not run on this build.
 
+On the [TensorFold leaderboard](https://tensorfold.dev/benchmarks) (community-v1, submitted 5 Nov 2026, pending
+moderation): code at 11.0 tok/s sampled and 12.2 greedy, first text in 0.35 s. The chat cell shows as incomplete:
+the suite asks for 256-token replies without ignoring end-of-sequence, and Ripple ends most of its chat answers
+sooner, so those samples count as early stops (about 10.3 tok/s while they ran).
+
 ## Notes
 
 - **Not served:** images (Ripple has no vision tower) and the publisher's DFlash2 drafter. Drafts come only from
