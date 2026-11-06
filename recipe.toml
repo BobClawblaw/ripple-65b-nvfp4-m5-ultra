@@ -23,7 +23,7 @@ drafter_dir = "~/models/Ripple-65B-Preview-DFlash2"
 # TensorFold's native Metal engine with the ricursive family: a worktree of tensorfold_src at tensorfold_sha, built by
 # `python3 -m mac build` under tf_cache; `binary` names a built tensorfold-native instead
 tensorfold_src = "~/github/TensorFold"   # a clone holding tensorfold_sha
-tensorfold_sha = "45685de42fb24f715c8e5197ced9e57924ad432f"  # the PR #2260 head (the drafter, on PR #2231)
+tensorfold_sha = "904eb81dafab165f981a7fd6be6a1e743a9c28fb"  # the PR #2260 head (the drafter, on PR #2231)
 zig = "zig"                              # Zig 0.17.0
 zig_cpu = "native"
 binary = ""

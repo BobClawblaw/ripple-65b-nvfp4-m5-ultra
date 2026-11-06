@@ -12,7 +12,7 @@ for it: replies stay bit-identical to undrafted ones, and a stream runs 1.5 to 2
 The engine's `ricursive` family is proposed to TensorFold as
 [PR #2231](https://github.com/ashhart/TensorFold/pull/2231), and the drafter as
 [PR #2260](https://github.com/ashhart/TensorFold/pull/2260) on top of it; neither is on TensorFold's main yet. This
-recipe builds #2260's head, commit `45685de4` (the `ripple-dflash2` branch of
+recipe builds #2260's head, commit `904eb81d` (the `ripple-dflash2` branch of
 [BobClawblaw/TensorFold](https://github.com/BobClawblaw/TensorFold)).
 
 ## Quick start
@@ -64,7 +64,7 @@ Ripple's think markers are spelled from several tokens, so a `thinking_budget` a
 ## What works, and how it was checked
 
 On one M5 Ultra (256 GB, macOS 27), checkpoint revision 99eea447, drafter revision 35609b3b. The drafted runs are
-on the drafter's code (#2260, the same code as `45685de4` before its last rebase); the plain checks below are on
+on the drafter's code (#2260, the same code as `904eb81d`); the plain checks below are on
 #2231's family code, which #2260 leaves bit-identical (53 of 53 replies, same speed). The full account, with the bf16
 release's numbers, is the engine's
 [recipe page](https://github.com/BobClawblaw/TensorFold/blob/ripple-dflash2/docs/recipes/ripple-65b-metal.md).
@@ -104,10 +104,10 @@ list), nothing else loaded:
 
 | streams | with the drafter | without | first token (drafted) | a round (drafted / without) |
 |---:|---:|---:|---:|---:|
-| 1 | 15.7 / 27.5 / 17.9 / 19.7 | 10.2 / 10.2 / 10.3 / 10.2 | 0.52-0.65 s | 131 / 98 ms |
-| 2 | 23.2 / 37.3 / 27.0 / 41.1 | 19.0 / 18.9 / 19.2 / 18.9 | 0.80-0.97 s | 167 / 106 ms |
+| 1 | 15.5 / 27.5 / 17.8 / 19.8 | 10.2 / 10.2 / 10.3 / 10.2 | 0.53-0.65 s | 131 / 98 ms |
+| 2 | 22.5 / 37.7 / 26.6 / 40.6 | 19.0 / 18.9 / 19.2 / 18.9 | 0.82-0.98 s | 166 / 106 ms |
 
-Tokens a second, all streams together. A drafted round keeps 2.66 tokens on average with one stream (48% of drafted
+Tokens a second, all streams together. A drafted round keeps 2.65 tokens on average with one stream (48% of drafted
 tokens accepted).
 
 | cold prompt | 2,220 | 8,776 | 35,015 | 139,723 tokens |
@@ -123,7 +123,8 @@ On the [TensorFold leaderboard](https://tensorfold.dev/benchmarks) (community-v1
 moderation): code at 11.0 tok/s sampled and 12.2 greedy, first text in 0.35 s. The chat cell shows as incomplete: the
 suite asks for 256-token replies without ignoring end-of-sequence, and Ripple ends most of its chat answers sooner, so
 those samples count as early stops (about 10.3 tok/s while they ran). The drafted run (community-v1, submitted 5 Nov
-2026, pending moderation, the drafter named in the receipt): code at 20.1 tok/s sampled and 35.4 greedy, first text in
+2026, pending moderation, the drafter named in the receipt; on `45685de4`, before the drafter's rounding followed
+z-lab's reference, with the same speed): code at 20.1 tok/s sampled and 35.4 greedy, first text in
 0.28 s; chat incomplete for the same reason (15.3 and 24.5 tok/s while it ran); 2,954 of 4,650 drafted tokens accepted.
 
 ## Notes
