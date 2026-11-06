@@ -123,9 +123,8 @@ On the [TensorFold leaderboard](https://tensorfold.dev/benchmarks) (community-v1
 moderation): code at 11.0 tok/s sampled and 12.2 greedy, first text in 0.35 s. The chat cell shows as incomplete: the
 suite asks for 256-token replies without ignoring end-of-sequence, and Ripple ends most of its chat answers sooner, so
 those samples count as early stops (about 10.3 tok/s while they ran). The drafted run (community-v1, submitted 5 Nov
-2026, pending moderation, the drafter named in the receipt; on `45685de4`, before the drafter's rounding followed
-z-lab's reference, with the same speed): code at 20.1 tok/s sampled and 35.4 greedy, first text in
-0.28 s; chat incomplete for the same reason (15.3 and 24.5 tok/s while it ran); 2,954 of 4,650 drafted tokens accepted.
+2026 on `904eb81d`, pending moderation, the drafter named in the receipt): code at 19.6 tok/s sampled and 35.8
+greedy, first text in 0.27 s; chat incomplete for the same reason; 2,969 of 4,645 drafted tokens accepted.
 
 ## Notes
 
